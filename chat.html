@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/chat.css">
+    <script src="/scripts/jquery.min.js"></script>
+    <script src="/scripts/bootstrap.min.js"></script>
+    <script src="/scripts/angular.min.js"></script>
+    <script src="/scripts/angular-sanitize.js"></script>
+    <script src="/scripts/chat.js"></script>
+    <script src="/scripts/app.js"></script>
+    <script src="/scripts/marked.js"></script>
+    <base target="_blank" />
+    <script>
+
+        var defaultSendButtonColor = "#000000";
+		var url = window.location.href;
+		var botid = "INSERT BOT ID";
+        var tokenOrSecret ="INSERT SECRET HERE";
+        var tokenNeedsRenewal = "false";
+		var botHighlightColor = "#3e92d2";
+		var botAccentColor = "#dbdee1";
+		var botIconBorderColor = "#B3DBF2";
+		var userBackgroundColor = "#808c95";
+		var botBackgroundColor = "#eceff1";
+		var name = "INSERT BOT NAME";
+        var botIcon = "//bot-framework.azureedge.net/bot-icons-v1/bot-framework-default-10.png";
+        var welcomeMessage = "WELCOME MESSAGE";
+
+        var maxTextBoxHeight = 60;
+        var minTextBoxHeight = 22;
+
+		url= url.substring(url.indexOf("?")+1);
+		var vars = url.split('&');
+		for (var i = 0; i < vars.length; i++) {
+			var pair = vars[i].split('=');
+			if (decodeURIComponent(pair[0]) == "bothighlightcolor") {
+			    botHighlightColor = decodeURIComponent(pair[1]);
+			}
+		}
+
+		
+		var chatClient = new ChatLib.ChatClient(tokenNeedsRenewal,tokenOrSecret, botid, function () { });
+
+		var collapsed = 0;
+
+		function ToggleChat() {
+		    
+		    if (collapsed == 1) {
+		        $("#wrap").css('display', 'block');
+		        collapsed = 0
+		    }
+		    else if (collapsed == 0) {
+		        $("#wrap").css('display', 'none');
+		        collapsed = 1;
+		    }
+
+		}
+		marked.setOptions({
+		    gfm: true,
+		    tables: true,
+		    breaks: true,
+		    pedantic: false,
+		    sanitize: true,
+		    smartLists: true,
+		    smartypants: false
+		});
+    </script>
+</head>
+<body onresize="resize_msg_container()">
+    <!-- Wrap all page content here -->
+
+    <div class="navbar navbar-default navbar-fixed-top no-sides-padding " id="topNavBar-height">
+        <div class="container-fluid botHighlightColor" id="topNavBar">
+            <div class="row" style="font-size:18px;">
+                <div class="col-md-6 col-lg-6 col-xs-6 col-md-6 no-sides-padding">
+                    <div id="header-text">
+                        Chat
+                    </div>
+                </div>
+                <!--<div class="col-md-6 col-lg-6 col-xs-6 col-md-6 pull-right no-sides-padding">
+                    <input type="button" onclick="ToggleChat()" value="Collpase" />
+                </div>-->
+                <!--<div class="col-md-6 col-lg-6 col-xs-6 pull-right no-sides-padding">
+                    <div id="header-text-subtext">
+                        Chat with this bot
+                    </div>
+                </div>-->
+                <!--<div class="col-md-1 col-lg-1 col-xs-1">
+                    <span class="glyphicon glyphicon-upload" id="upload-btn" ng-click="toggleUploadOptions()">
+                    </span>
+                </div>-->
+            </div>
+
+        </div>
+    </div>
+    <div id="wrap" class="BotMainDiv" ng-controller="ChatCtrl">
+
+
+        <!-- Begin page content -->
+        <div class="container-fluid" id="body-container">
+
+
+
+            <div class="row " id="welcome-notes">
+
+                <div div class="col-xs-12 col-sm-12 col-md-12 col-lg-12    msg-animate-welcome-msg">
+
+                    <div class="welcome-grid">
+                        <img id="welcome-bot-icon" ng-src="{{botIconPath}}" />
+                    </div>
+                    <div class="welcome-msg-bubble welcome-msg-bubble-color">
+
+                    </div>
+
+                    <div class="botBackgroundColor welcome-grid  welcome-message-color" id="welcome-message">
+                    </div>
+
+                    <div class="welcome-grid message-panel-timestamp">
+                        <span id="botId"></span>
+                        <span> · </span>
+                        <span>{{welcomeTimestamp}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div  id="messages-container">
+
+                <div  class="empty-div">
+                    
+
+                </div>
+
+                <div ng-repeat="message in GetMessages('1','true')" class="msg-row" >
+
+                    <div class="row">
+                        <div ng-switch="message.isBotResponse">
+                            <div ng-switch-when="false">
+                                <div class="col-xs-10 col-sm-10 col-md-10 col-lg-10  pull-right no-sides-padding msg-animate">
+                                    <div class="panel message-panel user-msg ">
+
+                                        <div class="panel-body userBackgroundColor user-msg-body">
+                                            <div ng-switch="message.msgtype">
+                                                <div class="message-text" ng-switch-when="text">
+
+                                                    <p>{{message.text}}</p>
+                                                </div>
+                                                <div ng-switch-when="image" class="image_in_msg-container">
+                                                    <a href="{{message.contentUrl}}" target="_blank">
+                                                        <img ng-src="{{message.contentUrl}}" class="image_in_msg" onload="scroll_adjust()"/>
+                                                     </a>
+                                                </div>
+
+                                            </div>
+
+
+                                        </div>
+
+                                        <br />
+                                        <div ng-switch="message.showtimestamp">
+
+                                            <div ng-switch-when="true" class="panel-footer message-panel-timestamp user-message-panel-timestamp ">
+                                                You · <time>{{message.timestampstr}}</time>
+
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="user-msg-bubble user-msg-bubble-color">
+
+                                    </div>
+                                    <br />
+
+                                </div>
+
+                            </div>
+                            <div ng-switch-when="true">
+
+                                <div class="col-xs-11 col-sm-11 col-md-11 col-lg-11 no-sides-padding msg-animate">
+
+                                    <div class="bot-icon-div">
+                                        <div ng-switch="message.showIcon">
+                                            <img ng-switch-when="true" class="bot-icon botHighlightColor" ng-src="{{botIconPath}}" />
+                                        </div>
+                                    </div>
+                                    <div class="panel message-panel bot-msg ">
+
+                                        <div class="panel-body botBackgroundColor bot-msg-body">
+                                            <div ng-switch="message.msgtype">
+
+                                                <div class="message-text" ng-switch-when="text">
+
+                                                    <p ng-bind-html="renderMarked(message.text)">
+                                                    </p>
+                                                </div>
+                                                <div ng-switch-when="image" class="image_in_msg-container">
+                                                    <a href="{{message.contentUrl}}" target="_blank">
+                                                        <img ng-src="{{message.contentUrl}}" class="image_in_msg" onload="scroll_adjust()" />
+                                                    </a>
+                                                </div>
+                                                
+                                            </div>
+                                        </div>
+
+                                        <div ng-switch="message.showtimestamp">
+                                            <div ng-switch-when="true" class="panel-footer message-panel-timestamp">
+                                                {{message.botId}} · <time>{{message.timestampstr}}</time>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bot-msg-bubble bot-msg-bubble-color">
+
+                                    </div>
+
+
+                                </div>
+
+                            </div>
+                        </div>
+
+
+
+                    </div>
+
+
+
+                </div>
+
+            </div>
+        </div>
+
+        <br />
+        <br />
+        <br />
+        <br />
+
+        <div class="navbar navbar-default navbar-fixed-bottom">
+            <div class="container-fluid botAccentColor" id="bottom-box">
+
+                <div class="row" id="send-btn">
+
+                    <div class="pull-left image-upload-div">
+                        <input type="file" id="imageUploadId" name="pic" accept="image/*" class="image_upload_input" onchange="angular.element(this).scope().FileSelected(this, 'true')" />
+                        <label for="imageUploadId" class="image-upload-div" id="image-upload-label" style="pointer-events:none;">
+                            <svg class="image-upload-svg" >
+                                <use xlink:href="../images/chat_image_ic.svg#chat_image_ic"></use>
+                            </svg>
+                        </label>
+                    </div>
+                    <div id="messageToSend" contenteditable="true" class="pull-left" data-ph="Type your message..."></div>
+                    <div class="pull-right send-button-div">
+                        <button  id="messageSendButton" type="button" ng-click="sendTextMessage('1','1','true')">
+                            <svg id="send-svg" >
+                                <use xlink:href="../images/chat_send_ic.svg#chat_send_ic"></use>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <div id="image-modal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header botHighlightColor">
+                    <button type="button" class="close foreground-color" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title foreground-color">Image</h4>
+                </div>
+                <div class="modal-body image-modal-body">
+                    <img src="" id="image-enlarge" />
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <script>
+        function scroll_adjust()
+        {
+            $("#body-container").animate({ scrollTop: $("#body-container")[0].scrollHeight }, "slow");
+        }
+        function enlarge_image(element)
+        {
+
+            $("#image-enlarge").attr('src', element);
+            $("#image-modal").modal('show');
+        }
+		$("#messageToSend").keypress(function (e) {
+		    var key = e.which;
+		    if(key == 13)  // the enter key code
+			{
+			     angular.element('#messageSendButton').triggerHandler('click');
+			     return false;
+			}
+		});
+
+		$("#messageToSend").on("input", function (e) {
+		    changeSendButtonColor();
+		});
+		$("#messageToSend").on("onpropertychange", function (e) {
+		    changeSendButtonColor();
+		});
+		function changeSendButtonColor() {
+		    var message = $("#messageToSend")[0].textContent;
+
+		    if (message.length > 0) {
+		        $("#send-svg").attr('style', 'color:' + botHighlightColor + ' !important');
+		        $("#send-svg").css('opacity','1');
+		    }
+
+		    if (message.length == 0) {
+		        $("#send-svg").attr('style', 'color:' + defaultSendButtonColor + ' !important');
+		        $("#send-svg").css('opacity', '0.3');
+		    }
+		}
+
+
+		$("#messageToSend").on("paste", function (e) {
+
+		    e.preventDefault();
+		    if ((e.originalEvent || e).clipboardData && (e.originalEvent || e).clipboardData.getData) {
+		        var text = (e.originalEvent || e).clipboardData.getData("text/plain");
+
+		        document.execCommand("insertHTML", false, text);
+		    }
+		    else if (window.clipboardData && window.clipboardData.getData) {
+		        var text = window.clipboardData.getData("Text");
+
+		        if (window.getSelection)
+		            window.getSelection().getRangeAt(0).insertNode(document.createTextNode(text));
+		    }
+		});
+
+
+		window.onload = function () {
+		    $("#welcome-notes").css('display','block');
+		    $("#botId").html(botid);
+		    $("#welcome-message").html(welcomeMessage);
+
+		    var defaultImageRegex = new RegExp('bot-framework-default-?([0-9]?[0-9]?).png');
+		    match = defaultImageRegex.exec(botIcon);
+		    var imageNo = 11;
+		    if (match != null)
+		    {
+		        if (match[1] == "") {
+		            imageNo = 7;
+		            $("#welcome-bot-icon").addClass("two-tone-"+ imageNo+"-highlight");
+		        }
+		        else {
+		            imageNo = parseInt(match[1]);
+		        }
+		    }
+
+		    $("#welcome-bot-icon").addClass("two-tone-"+ imageNo);
+
+		    var sheet_1 = document.createElement('style')
+		    sheet_1.innerHTML = ".botHighlightColor {background-color: " + botHighlightColor + " !important;}";
+		    document.body.appendChild(sheet_1);
+
+		    var sheet_2 = document.createElement('style')
+		    sheet_2.innerHTML = ".botAccentColor {background-color: " + botAccentColor + " !important;}";
+		    document.body.appendChild(sheet_2);
+
+		    var sheet_3 = document.createElement('style')
+		    sheet_3.innerHTML = ".userBackgroundColor {background-color: " + userBackgroundColor + " !important;}";
+		    document.body.appendChild(sheet_3);
+
+		    var sheet_4 = document.createElement('style')
+		    sheet_4.innerHTML = ".user-msg-bubble-color {border-color:  transparent transparent transparent " + userBackgroundColor + " !important;}";
+		    document.body.appendChild(sheet_4);
+
+		    var sheet_5 = document.createElement('style')
+		    sheet_5.innerHTML = ".bot-msg-bubble-color {border-color:  transparent " + botBackgroundColor + " transparent transparent !important;}";
+		    document.body.appendChild(sheet_5);
+
+		    var sheet_6 = document.createElement('style')
+		    sheet_6.innerHTML = ".botBackgroundColor {background-color: " + botBackgroundColor + " !important;}";
+		    document.body.appendChild(sheet_6);
+
+		    var sheet_7 = document.createElement('style')
+		    sheet_7.innerHTML = ".botIconBorderColor {border-color: " + botIconBorderColor + " !important;}";
+		    document.body.appendChild(sheet_7);
+
+		    var sheet_8 = document.createElement('style')
+		    sheet_8.innerHTML = ".welcome-msg-bubble-color {border-color:  transparent transparent " + botBackgroundColor + "  transparent !important;}";
+		    document.body.appendChild(sheet_8);
+
+            resize_msg_container();
+		}
+
+        function resize_msg_container()
+		{
+		    var welcomemsgContainerHeight = $("#welcome-notes").height();
+            var msgcontainerHeight = $(document).height() - 110 - welcomemsgContainerHeight;
+            $("#messages-container").css('min-height', msgcontainerHeight);
+		}
+    </script>
+
+    <script src="/scripts/svgxuse.js"></script>
+</body>
+</html>
